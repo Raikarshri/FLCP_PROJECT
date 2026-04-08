@@ -1,0 +1,24 @@
+stages:
+  ml:
+    cmd: .venv\Scripts\python.exe FLCP_ML/train_ml.py
+    deps:
+      - FLCP_ML/train_ml.py
+      - DATA/lungcancer_clean.csv
+    outs:
+      - FLCP_ML/ml_results.json
+
+  dl:
+    cmd: .venv\Scripts\python.exe FLCP_DL/train_dl.py
+    deps:
+      - FLCP_DL/train_dl.py
+      - DATA/lungcancer_clean.csv
+    outs:
+      - FLCP_DL/dl_results.json
+
+  qml:
+    cmd: .venv\Scripts\python.exe FLCP_QML/qml_model.py
+    deps:
+      - FLCP_QML/qml_model.py
+      - DATA/lungcancer_clean.csv
+    outs:
+      - FLCP_QML/model_results.json

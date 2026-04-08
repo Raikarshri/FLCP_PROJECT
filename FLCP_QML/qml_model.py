@@ -4,6 +4,10 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 import json
+import mlflow
+import mlflow.sklearn
+
+mlflow.set_experiment("QML Experiment")
 
 # QML
 from qiskit.circuit.library import ZZFeatureMap, RealAmplitudes
@@ -42,11 +46,18 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
 # CLASSICAL MODEL
 
-svc = SVC()
-svc.fit(X_train, y_train)
+with mlflow.start_run(run_name="QML_Classical_Model"):
+    svc = SVC()
+    svc.fit(X_train, y_train)
 
-classical_accuracy = svc.score(X_test, y_test)
-print("Classical Accuracy:", classical_accuracy)
+    classical_accuracy = svc.score(X_test, y_test)
+    print("Classical Accuracy:", classical_accuracy)
+
+    # Log metric
+    mlflow.log_metric("classical_accuracy", classical_accuracy)
+
+    # Log model
+    mlflow.sklearn.log_model(svc, name="classical_model")
 
 
 # QML MODEL
@@ -58,17 +69,27 @@ ansatz = RealAmplitudes(num_qubits=num_features, reps=2)
 
 optimizer = COBYLA(maxiter=20)
 
-vqc = VQC(
-    feature_map=feature_map,
-    ansatz=ansatz,
-    optimizer=optimizer
-)
+with mlflow.start_run(run_name="QML_Quantum_Model"):
+    vqc = VQC(
+        feature_map=feature_map,
+        ansatz=ansatz,
+        optimizer=optimizer
+    )
 
-print("Training Quantum Model... ⏳")
-vqc.fit(X_train, y_train)
+    print("Training Quantum Model... ⏳")
+    vqc.fit(X_train, y_train)
 
-quantum_accuracy = vqc.score(X_test, y_test)
-print("Quantum Accuracy:", quantum_accuracy)
+    quantum_accuracy = vqc.score(X_test, y_test)
+    print("Quantum Accuracy:", quantum_accuracy)
+
+    # Log metrics
+    mlflow.log_metric("quantum_accuracy", quantum_accuracy)
+    mlflow.log_param("num_features", num_features)
+    mlflow.log_param("feature_map_reps", 1)
+    mlflow.log_param("ansatz_reps", 2)
+    mlflow.log_param("optimizer_maxiter", 20)
+
+    # Note: MLflow doesn't have built-in support for Qiskit models, so we skip logging the model for now
 
 
 # SAVE RESULTS
@@ -81,10 +102,10 @@ results = {
     "total_samples": len(X)
 }
 
-with open("model_results.json", "w") as f:
+with open("FLCP_QML/model_results.json", "w") as f:
     json.dump(results, f)
 
-print("✅ Results saved to model_results.json")
+print("✅ Results saved to FLCP_QML/model_results.json")
 
 
 # GENERATE REPORT
@@ -93,10 +114,10 @@ import subprocess
 import os
 
 # Run the report generator
-subprocess.run(["python", "generate_report.py"])
+subprocess.run(["python", "FLCP_QML/generate_report.py"])
 
 # Open the webpage
-html_path = os.path.abspath("results.html")
+html_path = os.path.abspath("FLCP_QML/results.html")
 print(f"\n🎉 Training complete! Open your results at:")
 print(f"file://{html_path}")
 print("Or simply double-click results.html in your file explorer.")

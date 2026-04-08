@@ -22,3 +22,15 @@ def predict():
                             )
 if __name__ == "__main__":
     app.run(debug=True)
+
+import json
+
+try:
+    accuracy = classical_accuracy  # or your actual variable
+except:
+    accuracy = 0
+
+with open("FLCP_ML/ml_results.json", "w") as f:
+    json.dump({"accuracy": accuracy}, f)
+
+print(" ML results saved")
