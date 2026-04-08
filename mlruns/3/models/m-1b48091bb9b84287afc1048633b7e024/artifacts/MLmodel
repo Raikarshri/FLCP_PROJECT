@@ -1,0 +1,20 @@
+artifact_path: file:D:/sri/FLCP_PROJECT/mlruns/3/models/m-1b48091bb9b84287afc1048633b7e024/artifacts
+flavors:
+  keras:
+    data: data
+    keras_backend: tensorflow
+    keras_version: 3.14.0
+    save_exported_model: false
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.keras
+    python_version: 3.13.12
+mlflow_version: 3.11.1
+model_id: m-1b48091bb9b84287afc1048633b7e024
+model_size_bytes: 64709
+model_uuid: m-1b48091bb9b84287afc1048633b7e024
+prompts: null
+run_id: cafe399256864aa3a9f59e687a835910
+utc_time_created: '2026-04-08 20:03:58.100681'

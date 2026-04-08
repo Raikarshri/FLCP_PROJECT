@@ -1,1 +1,1 @@
-{"knn_accuracy": 0.636, "decision_tree_accuracy": 0.808, "random_forest_accuracy": 0.903, "best_model": "Random Forest", "best_accuracy": 0.903}
+{"knn_accuracy": 0.636, "decision_tree_accuracy": 0.809, "random_forest_accuracy": 0.905, "best_model": "Random Forest", "best_accuracy": 0.905}

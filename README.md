@@ -417,46 +417,217 @@ Each module independently trains a model on the same problem statement:
 
 ## How to Run the Project
 
-## Prerequisites
+## Complete Setup and Run Guide
 
-Make sure the following are installed:
+This section explains how to set up the project from GitHub and run it end to end on a Windows machine using PowerShell.
 
-- Python 3.10 or newer
-- pip
-- virtualenv or venv
+## Recommended Python Version
 
-Recommended packages based on the code:
+Use **Python 3.13** or **Python 3.12** for the best compatibility.
 
-- flask
-- pandas
-- numpy
-- scikit-learn
-- tensorflow
-- mlflow
-- dvc
-- qiskit
-- qiskit-machine-learning
-- qiskit-algorithms
+Reason:
 
-## 1. Create and Activate a Virtual Environment
+- `tensorflow` support is not reliable on Python `3.14`
+- the project depends on `tensorflow`, `scikit-learn`, `mlflow`, `dvc`, and `qiskit`
 
-### Windows PowerShell
+## 1. Clone the Repository
+
+If the project is on GitHub, clone it first:
+
+```powershell
+cd D:\
+git clone <your-github-repo-url>
+cd sri
+cd FLCP_PROJECT
+```
+
+If you already have the folder on your system, just navigate into it:
+
+```powershell
+cd D:\sri\FLCP_PROJECT
+```
+
+## 2. Verify That You Are in the Project Root
+
+You should be inside the folder that contains:
+
+- `app.py`
+- `dvc.yaml`
+- `README.md`
+- `FLCP_ML`
+- `FLCP_DL`
+- `FLCP_QML`
+
+You can check with:
+
+```powershell
+Get-ChildItem
+```
+
+## 3. Create a Virtual Environment
+
+From the project root:
 
 ```powershell
 cd D:\sri\FLCP_PROJECT
 python -m venv .venv
+```
+
+If you installed Python 3.13 separately, use:
+
+```powershell
+py -3.13 -m venv .venv
+```
+
+## 4. Activate the Virtual Environment
+
+```powershell
 .venv\Scripts\Activate.ps1
 ```
 
-## 2. Install Dependencies
+After activation, your terminal should usually show `(.venv)` at the beginning of the prompt.
 
-If the project does not already include a `requirements.txt`, install the main dependencies manually:
+## 5. Upgrade pip
+
+```powershell
+python -m pip install --upgrade pip
+```
+
+## 6. Install All Required Packages
+
+Install the project dependencies manually:
 
 ```powershell
 pip install flask pandas numpy scikit-learn tensorflow mlflow dvc qiskit qiskit-machine-learning qiskit-algorithms
 ```
 
-## 3. Run the Main Lecturer Demo Page
+## 7. Verify the Environment
+
+Run this import check:
+
+```powershell
+python -c "import flask, sklearn, tensorflow, mlflow, dvc, qiskit, qiskit_machine_learning; print('all imports ok')"
+```
+
+If you see:
+
+```text
+all imports ok
+```
+
+then the environment is ready.
+
+## 8. Understand the Main Folders Before Running
+
+### Project root
+
+Contains:
+
+- `app.py`
+- `dvc.yaml`
+- `mlflow.db`
+- `README.md`
+
+This is the main place from which you should run commands.
+
+### `FLCP_ML`
+
+Contains the classical machine learning code:
+
+- KNN
+- Decision Tree
+- Random Forest
+- training script
+- ML prediction web form
+
+### `FLCP_DL`
+
+Contains the deep learning code:
+
+- DNN training script
+- saved model files
+- DL web app
+
+### `FLCP_QML`
+
+Contains the quantum machine learning comparison code:
+
+- QML training script
+- report generator
+- HTML results page
+
+## 9. Run the Classical ML Training
+
+From the root folder:
+
+```powershell
+cd D:\sri\FLCP_PROJECT
+python FLCP_ML\train_ml.py
+```
+
+This generates:
+
+- `FLCP_ML/ml_results.json`
+
+It also logs the run to MLflow under:
+
+- `ML Experiment`
+
+## 10. Run the Deep Learning Training
+
+From the root folder:
+
+```powershell
+cd D:\sri\FLCP_PROJECT
+python FLCP_DL\train_dl.py
+```
+
+This generates:
+
+- `FLCP_DL/dl_results.json`
+
+If you want to regenerate the saved DL model artifacts used by the DL Flask app, also run:
+
+```powershell
+python FLCP_DL\dl_model.py
+```
+
+This creates or updates:
+
+- `FLCP_DL/dl_model.h5`
+- `FLCP_DL/scaler.pkl`
+- `FLCP_DL/model_accuracy.pkl`
+
+## 11. Run the QML Training
+
+From the root folder:
+
+```powershell
+cd D:\sri\FLCP_PROJECT
+python FLCP_QML\qml_model.py
+```
+
+This generates:
+
+- `FLCP_QML/model_results.json`
+- `FLCP_QML/results.html`
+
+Note:
+
+- this script usually takes longer than ML and DL
+- the quantum part may take several minutes
+
+If you want a quick test version instead of full QML training:
+
+```powershell
+python FLCP_QML\test_model.py
+```
+
+## 12. Run the Main Lecturer Demo Page
+
+The main academic comparison dashboard is the root Flask app.
+
+Run:
 
 ```powershell
 cd D:\sri\FLCP_PROJECT
@@ -469,29 +640,16 @@ Open in browser:
 http://127.0.0.1:5000
 ```
 
-This is the primary comparison dashboard for the project. It shows:
+This page shows:
 
 - ML comparison cards for KNN, Decision Tree, and Random Forest
 - DNN accuracy
 - QML accuracy
-- a final conclusion summary
+- final conclusion
 
-## 4. Run the Deep Learning Training Script
+## 13. Run the Deep Learning Web App
 
-To train or regenerate the DL model artifacts:
-
-```powershell
-cd D:\sri\FLCP_PROJECT
-python FLCP_DL\dl_model.py
-```
-
-This creates or updates:
-
-- `FLCP_DL/dl_model.h5`
-- `FLCP_DL/scaler.pkl`
-- `FLCP_DL/model_accuracy.pkl`
-
-## 5. Run the Deep Learning Web App
+If you want to open the dedicated DL web application:
 
 ```powershell
 cd D:\sri\FLCP_PROJECT
@@ -504,59 +662,30 @@ Open in browser:
 http://127.0.0.1:5001
 ```
 
-## 6. Run the MLflow-Friendly Training Pipelines Manually
+## 14. Run the DVC Pipeline
 
-### Classical ML
+DVC is used to reproduce the pipeline outputs from the root folder.
 
-```powershell
-cd D:\sri\FLCP_PROJECT
-python FLCP_ML\train_ml.py
-```
-
-### Deep Learning
-
-```powershell
-cd D:\sri\FLCP_PROJECT
-python FLCP_DL\train_dl.py
-```
-
-### Quantum Machine Learning
-
-```powershell
-cd D:\sri\FLCP_PROJECT
-python FLCP_QML\qml_model.py
-```
-
-## Lecturer Demo Flow
-
-For the final academic presentation, use this sequence:
-
-```powershell
-cd D:\sri\FLCP_PROJECT
-dvc repro
-python app.py
-python -m mlflow ui --port 5002
-```
-
-Open:
-
-- `http://127.0.0.1:5000` for the lecturer comparison webpage
-- `http://127.0.0.1:5002` for MLflow experiment review
-
-## 7. Run the DVC Pipeline
-
-If DVC is configured locally, run the pipeline with:
+Run:
 
 ```powershell
 cd D:\sri\FLCP_PROJECT
 dvc repro
 ```
 
-This will execute the stages defined in `dvc.yaml`.
+This executes the stages defined in `dvc.yaml`.
 
-## 8. View MLflow Runs
+Expected stage outputs:
 
-To inspect logged experiments:
+- `FLCP_ML/ml_results.json`
+- `FLCP_DL/dl_results.json`
+- `FLCP_QML/model_results.json`
+
+## 15. Run MLflow UI
+
+MLflow is used to inspect experiments, metrics, and logged models.
+
+Run:
 
 ```powershell
 cd D:\sri\FLCP_PROJECT
@@ -569,11 +698,137 @@ Then open:
 http://127.0.0.1:5002
 ```
 
-If port `5002` is already occupied, run MLflow on another port:
+In MLflow, you should expect experiments like:
+
+- `ML Experiment`
+- `DL Experiment`
+- `QML Experiment`
+
+## 16. Recommended End-to-End Run Order
+
+If you want to run the complete project in the correct order, use:
 
 ```powershell
+cd D:\sri\FLCP_PROJECT
+.venv\Scripts\Activate.ps1
+python FLCP_ML\train_ml.py
+python FLCP_DL\train_dl.py
+python FLCP_QML\qml_model.py
+python app.py
+```
+
+In another terminal, start MLflow:
+
+```powershell
+cd D:\sri\FLCP_PROJECT
+.venv\Scripts\Activate.ps1
 python -m mlflow ui --port 5002
 ```
+
+Then open:
+
+- `http://127.0.0.1:5000` for the main lecturer dashboard
+- `http://127.0.0.1:5002` for MLflow experiment tracking
+
+## 17. How to Test That Everything Is Working
+
+### Check the result files
+
+After training, these files should exist:
+
+- `FLCP_ML/ml_results.json`
+- `FLCP_DL/dl_results.json`
+- `FLCP_QML/model_results.json`
+- `FLCP_QML/results.html`
+
+### Run the automated tests
+
+```powershell
+cd D:\sri\FLCP_PROJECT
+python -m unittest discover -s tests -p "test_*.py" -v
+```
+
+### Run syntax verification
+
+```powershell
+python -m py_compile app.py FLCP_ML\train_ml.py FLCP_DL\train_dl.py FLCP_QML\qml_model.py
+```
+
+### Check the dashboard
+
+Start:
+
+```powershell
+python app.py
+```
+
+Then confirm the page shows:
+
+- ML section
+- DNN section
+- QML section
+- Conclusion section
+
+## 18. Common Issues
+
+### `ModuleNotFoundError: No module named 'tensorflow'`
+
+Cause:
+
+- TensorFlow is not installed in the active environment
+- or you are using an unsupported Python version
+
+Fix:
+
+- activate the correct virtual environment
+- use Python `3.12` or `3.13`
+- run `pip install tensorflow`
+
+### `DL` or `QML` results do not appear in MLflow
+
+Cause:
+
+- the training script for that module has not been run yet
+
+Fix:
+
+- run `python FLCP_DL\train_dl.py`
+- run `python FLCP_QML\qml_model.py`
+
+### `MLflow UI opens but the Overview page is empty`
+
+Cause:
+
+- you are on the observability page, not the training runs page
+
+Fix:
+
+- open the experiment
+- click `Training runs`
+
+### `qml_model.py` takes a long time
+
+Cause:
+
+- quantum model training is computationally expensive
+
+Fix:
+
+- wait for the run to complete
+- or use `python FLCP_QML\test_model.py` for a fast demo result
+
+## 19. Final Presentation Workflow
+
+For presentation or viva/demo, use this simple flow:
+
+1. Open terminal in `D:\sri\FLCP_PROJECT`
+2. Activate `.venv`
+3. Run all training scripts
+4. Start `python app.py`
+5. Start `python -m mlflow ui --port 5002`
+6. Open dashboard on port `5000`
+7. Open MLflow on port `5002`
+8. Show comparison results and conclusion
 
 ## Project Architecture in Detail
 

@@ -125,11 +125,11 @@
         }
 
         .classical-bar {
-            background: linear-gradient(90deg, #667eea 0%, #667eea 85.0%, #e0e0e0 85.0%, #e0e0e0 100%);
+            background: linear-gradient(90deg, #667eea 0%, #667eea 70.6%, #e0e0e0 70.6%, #e0e0e0 100%);
         }
 
         .quantum-bar {
-            background: linear-gradient(90deg, #764ba2 0%, #764ba2 72.0%, #e0e0e0 72.0%, #e0e0e0 100%);
+            background: linear-gradient(90deg, #764ba2 0%, #764ba2 54.900000000000006%, #e0e0e0 54.900000000000006%, #e0e0e0 100%);
         }
 
         .footer {
@@ -162,14 +162,14 @@
             <div class="result-card">
                 <h2>Classical Model</h2>
                 <p style="color: #666; margin-bottom: 15px;">Support Vector Machine (SVM)</p>
-                <div class="accuracy-value classical">85.00%</div>
+                <div class="accuracy-value classical">70.60%</div>
                 <p style="color: #999; margin-top: 10px;">Accuracy Score</p>
             </div>
 
             <div class="result-card">
                 <h2>Quantum Model</h2>
                 <p style="color: #666; margin-bottom: 15px;">VQC (Variational Quantum Classifier)</p>
-                <div class="accuracy-value quantum">72.00%</div>
+                <div class="accuracy-value quantum">54.90%</div>
                 <p style="color: #999; margin-top: 10px;">Accuracy Score</p>
             </div>
         </div>
@@ -178,17 +178,17 @@
             <h2>Accuracy Comparison</h2>
             <div class="comparison-bar">
                 <div class="bar-label">Classical (SVM)</div>
-                <div class="bar classical-bar">85.00%</div>
+                <div class="bar classical-bar">70.60%</div>
 
                 <div class="bar-label">Quantum (VQC)</div>
-                <div class="bar quantum-bar">72.00%</div>
+                <div class="bar quantum-bar">54.90%</div>
             </div>
 
             <p style="color: #666; margin-top: 30px; line-height: 1.6;">
                 <strong>Dataset:</strong> Lung Cancer Dataset<br>
                 <strong>Features:</strong> 4 (PCA reduced)<br>
-                <strong>Test Set Size:</strong> 50 samples (20%)<br>
-                <strong>Total Samples:</strong> 250<br>
+                <strong>Test Set Size:</strong> 1000 samples (20%)<br>
+                <strong>Total Samples:</strong> 5000<br>
                 <strong>Classical Model:</strong> SVM with RBF kernel<br>
                 <strong>Quantum Model:</strong> VQC with ZZFeatureMap & RealAmplitudes
             </p>
