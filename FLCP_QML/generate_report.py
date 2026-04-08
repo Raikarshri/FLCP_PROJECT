@@ -1,9 +1,15 @@
+from pathlib import Path
 import json
 
-def generate_html_report():
-    # Load results
-    with open("FLCP_QML/model_results.json", "r") as f:
-        results = json.load(f)
+
+MODULE_DIR = Path(__file__).resolve().parent
+RESULTS_PATH = MODULE_DIR / "model_results.json"
+REPORT_PATH = MODULE_DIR / "results.html"
+
+
+def generate_html_report(results_path=RESULTS_PATH, report_path=REPORT_PATH):
+    with Path(results_path).open("r", encoding="utf-8") as results_file:
+        results = json.load(results_file)
 
     classical_accuracy = results["classical_accuracy"]
     quantum_accuracy = results["quantum_accuracy"]
@@ -167,7 +173,7 @@ def generate_html_report():
 <body>
     <div class="container">
         <div class="header">
-            <h1>🫁 Lung Cancer Classification</h1>
+            <h1>Lung Cancer Classification</h1>
             <p>Classical SVM vs Quantum Machine Learning Comparison</p>
         </div>
 
@@ -188,7 +194,7 @@ def generate_html_report():
         </div>
 
         <div class="comparison">
-            <h2>📊 Accuracy Comparison</h2>
+            <h2>Accuracy Comparison</h2>
             <div class="comparison-bar">
                 <div class="bar-label">Classical (SVM)</div>
                 <div class="bar classical-bar">{classical_accuracy:.2%}</div>
@@ -215,11 +221,10 @@ def generate_html_report():
 </html>
 """
 
-    # Save HTML report
-    with open("results.html", "w", encoding="utf-8") as f:
-        f.write(html_content)
+    report_path = Path(report_path)
+    report_path.write_text(html_content, encoding="utf-8")
+    print(f"HTML report generated: {report_path}")
 
-    print("✅ HTML report generated: results.html")
 
 if __name__ == "__main__":
     generate_html_report()

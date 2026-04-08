@@ -1,6 +1,8 @@
 import mlflow
 import mlflow.keras
 import sys
+from pathlib import Path
+
 sys.stdout.reconfigure(encoding='utf-8')
 import pandas as pd
 import numpy as np
@@ -11,9 +13,11 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 
 mlflow.set_experiment("DL Experiment")
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODULE_DIR = Path(__file__).resolve().parent
 
 # Load dataset
-df = pd.read_csv("DATA/lungcancer_clean.csv")
+df = pd.read_csv(BASE_DIR / "DATA" / "lungcancer_clean.csv")
 
 # Fix column names
 df.columns = df.columns.str.strip()
@@ -36,7 +40,13 @@ scaler = MinMaxScaler()
 X = scaler.fit_transform(X)
 
 # Train-test split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y,
+)
 
 # Build model
 model = Sequential([
@@ -63,7 +73,7 @@ with mlflow.start_run(run_name="DL_Model"):
     mlflow.keras.log_model(model, name="model")
 
 # Save result
-with open("FLCP_DL/dl_results.json", "w") as f:
+with (MODULE_DIR / "dl_results.json").open("w", encoding="utf-8") as f:
     json.dump({"accuracy": float(accuracy)}, f)
 
 print("✅ DL results saved")

@@ -1,6 +1,8 @@
-import pandas as pd
-import numpy as np
+from pathlib import Path
 import pickle
+
+import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Sequential
@@ -13,9 +15,12 @@ warnings.filterwarnings('ignore')
 
 
 np.random.seed(42)
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODULE_DIR = Path(__file__).resolve().parent
+DATASET_PATH = BASE_DIR / "DATA" / "lungcancer_clean.csv"
 
 # Load dataset - FIXED PATH
-df = pd.read_csv("DATA/lungcancer_clean.csv")
+df = pd.read_csv(DATASET_PATH)
 
 # Clean column names
 df.columns = df.columns.str.strip()
@@ -107,7 +112,9 @@ print(classification_report(y_test, y_pred, target_names=['No Cancer', 'Cancer']
 
 # Save model, scaler, and accuracy
 print("\nSaving model, scaler, and accuracy...")
-model.save("dl_model.h5")
-pickle.dump(scaler, open("scaler.pkl", "wb"))
-pickle.dump({"accuracy": float(test_accuracy)}, open("model_accuracy.pkl", "wb"))
+model.save(MODULE_DIR / "dl_model.h5")
+with (MODULE_DIR / "scaler.pkl").open("wb") as scaler_file:
+    pickle.dump(scaler, scaler_file)
+with (MODULE_DIR / "model_accuracy.pkl").open("wb") as accuracy_file:
+    pickle.dump({"accuracy": float(test_accuracy)}, accuracy_file)
 print("Done! Model, scaler, and accuracy saved.")

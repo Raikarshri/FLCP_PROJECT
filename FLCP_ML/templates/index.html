@@ -112,6 +112,12 @@
             <button class="btn btn-primary w-100">Predict</button>
         </form>
 
+        {% if error_message %}
+        <div class="alert alert-danger mt-3 text-center">
+            {{ error_message }}
+        </div>
+        {% endif %}
+
         {% if knn is defined %}
         <hr>
 

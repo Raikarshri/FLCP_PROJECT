@@ -60,6 +60,9 @@ FLCP_PROJECT/
 |-- dvc.yaml
 |-- dvc.lock
 |-- mlflow.db
+|-- app.py
+|-- templates/
+|   `-- index.html
 |-- dl_model.h5
 |-- scaler.pkl
 |-- model_accuracy.pkl
@@ -273,9 +276,9 @@ There are two deep-learning-related training scripts in the project:
 8. Train the model with early stopping.
 9. Evaluate model accuracy on the test set.
 10. Save:
-    - `dl_model.h5`
-    - `scaler.pkl`
-    - `model_accuracy.pkl`
+    - `FLCP_DL/dl_model.h5`
+    - `FLCP_DL/scaler.pkl`
+    - `FLCP_DL/model_accuracy.pkl`
 
 ### `dl_app.py` Workflow
 
@@ -453,10 +456,10 @@ If the project does not already include a `requirements.txt`, install the main d
 pip install flask pandas numpy scikit-learn tensorflow mlflow dvc qiskit qiskit-machine-learning qiskit-algorithms
 ```
 
-## 3. Run the Classical ML Web App
+## 3. Run the Main Lecturer Demo Page
 
 ```powershell
-cd D:\sri\FLCP_PROJECT\FLCP_ML
+cd D:\sri\FLCP_PROJECT
 python app.py
 ```
 
@@ -465,6 +468,13 @@ Open in browser:
 ```text
 http://127.0.0.1:5000
 ```
+
+This is the primary comparison dashboard for the project. It shows:
+
+- ML comparison cards for KNN, Decision Tree, and Random Forest
+- DNN accuracy
+- QML accuracy
+- a final conclusion summary
 
 ## 4. Run the Deep Learning Training Script
 
@@ -477,9 +487,9 @@ python FLCP_DL\dl_model.py
 
 This creates or updates:
 
-- `dl_model.h5`
-- `scaler.pkl`
-- `model_accuracy.pkl`
+- `FLCP_DL/dl_model.h5`
+- `FLCP_DL/scaler.pkl`
+- `FLCP_DL/model_accuracy.pkl`
 
 ## 5. Run the Deep Learning Web App
 
@@ -491,7 +501,7 @@ python FLCP_DL\dl_app.py
 Open in browser:
 
 ```text
-http://127.0.0.1:5000
+http://127.0.0.1:5001
 ```
 
 ## 6. Run the MLflow-Friendly Training Pipelines Manually
@@ -517,6 +527,22 @@ cd D:\sri\FLCP_PROJECT
 python FLCP_QML\qml_model.py
 ```
 
+## Lecturer Demo Flow
+
+For the final academic presentation, use this sequence:
+
+```powershell
+cd D:\sri\FLCP_PROJECT
+dvc repro
+python app.py
+python -m mlflow ui --port 5002
+```
+
+Open:
+
+- `http://127.0.0.1:5000` for the lecturer comparison webpage
+- `http://127.0.0.1:5002` for MLflow experiment review
+
 ## 7. Run the DVC Pipeline
 
 If DVC is configured locally, run the pipeline with:
@@ -534,19 +560,19 @@ To inspect logged experiments:
 
 ```powershell
 cd D:\sri\FLCP_PROJECT
-mlflow ui
+python -m mlflow ui --port 5002
 ```
 
 Then open:
 
 ```text
-http://127.0.0.1:5000
+http://127.0.0.1:5002
 ```
 
-If port `5000` is already occupied by a Flask app, run MLflow on another port:
+If port `5002` is already occupied, run MLflow on another port:
 
 ```powershell
-mlflow ui --port 5001
+python -m mlflow ui --port 5002
 ```
 
 ## Project Architecture in Detail
@@ -586,12 +612,12 @@ Responsible for storing trained outputs and metrics.
 
 Examples:
 
-- `dl_model.h5`
-- `scaler.pkl`
-- `model_accuracy.pkl`
+- `FLCP_DL/dl_model.h5`
+- `FLCP_DL/scaler.pkl`
+- `FLCP_DL/model_accuracy.pkl`
 - `FLCP_DL/dl_results.json`
-- expected `FLCP_ML/ml_results.json`
-- expected `FLCP_QML/model_results.json`
+- `FLCP_ML/ml_results.json`
+- `FLCP_QML/model_results.json`
 
 ## Layer 4: Serving and Presentation Layer
 
@@ -626,11 +652,9 @@ Primary files:
 
 While the project structure is clear, there are a few implementation details to be aware of:
 
-- `FLCP_ML/ml_results.json` is expected by DVC but is not currently present in this copy of the project.
-- `FLCP_QML/model_results.json` is expected by DVC but is not currently present in this copy of the project.
-- `FLCP_DL/dl_results.json` is present.
-- The deep learning web app expects model artifacts to exist before running.
-- The ML and DL apps both default to Flask port `5000`, so they should not be run at the same time on the same port unless one port is changed.
+- `FLCP_ML/train_ml.py`, `FLCP_DL/train_dl.py`, and `FLCP_QML/qml_model.py` are the correct sources for pipeline result files.
+- The deep learning web app expects model artifacts to exist before running and now resolves them consistently from `FLCP_DL` first, then the project root as a fallback.
+- The ML web app runs on port `5000` and the DL web app runs on port `5001` by default.
 - Some root-level artifacts are duplicated with files inside module folders, which suggests the project evolved over time during experimentation.
 
 ## Recommended Reading Order for Understanding the Codebase

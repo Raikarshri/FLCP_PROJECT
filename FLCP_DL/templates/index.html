@@ -449,10 +449,16 @@
             </button>
             
         </form>
+
+        {% if startup_error %}
+        <div class="alert alert-danger mt-4 text-center">
+            {{ startup_error }}
+        </div>
+        {% endif %}
         
         <!-- Results Section -->
         {% if prediction_text %}
-        <div class="prediction-result {% if '🔴' in prediction_text %}high-risk{% else %}low-risk{% endif %}">
+        <div class="prediction-result {% if 'High' in prediction_text %}high-risk{% else %}low-risk{% endif %}">
             <h3>{{ prediction_text }}</h3>
             <div class="probability">Risk Probability: {{ probability }}</div>
             <div class="confidence">Confidence: {{ confidence }}</div>
