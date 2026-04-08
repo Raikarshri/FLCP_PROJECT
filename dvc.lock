@@ -1,0 +1,50 @@
+schema: '2.0'
+stages:
+  ml:
+    cmd: python FLCP_ML/train_ml.py
+    deps:
+    - path: DATA/lungcancer_clean.csv
+      hash: md5
+      md5: 39e6ef4ff1e0639723b5cac5b974511b
+      size: 289170
+    - path: FLCP_ML/train_ml.py
+      hash: md5
+      md5: 5ab889565eba1995feac6e8de24f929b
+      size: 956
+    outs:
+    - path: FLCP_ML/ml_results.json
+      hash: md5
+      md5: 7ecb2b70fd01b8277c83664fba8bcefc
+      size: 19
+  dl:
+    cmd: python FLCP_DL/train_dl.py
+    deps:
+    - path: DATA/lungcancer_clean.csv
+      hash: md5
+      md5: 39e6ef4ff1e0639723b5cac5b974511b
+      size: 289170
+    - path: FLCP_DL/train_dl.py
+      hash: md5
+      md5: ad8df070dfed7714b0644de1a64a2188
+      size: 1404
+    outs:
+    - path: FLCP_DL/dl_results.json
+      hash: md5
+      md5: fb42811b0a917dc2ece7ec34c469f87b
+      size: 32
+  qml:
+    cmd: python FLCP_QML/qml_model.py
+    deps:
+    - path: DATA/lungcancer_clean.csv
+      hash: md5
+      md5: 39e6ef4ff1e0639723b5cac5b974511b
+      size: 289170
+    - path: FLCP_QML/qml_model.py
+      hash: md5
+      md5: eac2d8d96dcbc15c762830861be46183
+      size: 2321
+    outs:
+    - path: FLCP_QML/model_results.json
+      hash: md5
+      md5: da7e3196913c3b3cf8c06a1f544f0eeb
+      size: 117
