@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lung Cancer Risk Assessment DL</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        
+        .main-container {
+            width: 100%;
+            max-width: 1000px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .model-info-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            margin-top: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .model-info-badge strong {
+            font-size: 1.2rem;
+            color: #fff;
+        }
+        
+        .box {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+            font-size: 0.95rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            padding: 12px 15px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .row {
+            margin-bottom: 10px;
+        }
+        
+        .btn {
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+        
+        .prediction-result {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        .prediction-result.high-risk {
+            background: rgba(255, 52, 52, 0.1);
+            border: 2px solid #ff3434;
+        }
+        
+        .prediction-result.low-risk {
+            background: rgba(52, 211, 153, 0.1);
+            border: 2px solid #34d399;
+        }
+        
+        .prediction-result h3 {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .prediction-result .probability {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+        
+        .prediction-result .confidence {
+            font-size: 0.95rem;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .info-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-top: 15px;
+        }
+        
+        .model-accuracy-display {
+            font-size: 1rem;
+            color: #555;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.03);
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .model-accuracy-display strong {
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="main-container">
+    <div class="header">
+        <h1><i class="fas fa-lungs"></i> Lung Cancer AI</h1>
+        <p>Advanced dl Risk Assessment System</p>
+        {% if model_accuracy %}
+        <div class="model-info-badge">
+            <i class="fas fa-brain"></i> Model Test Accuracy: <strong>{{ model_accuracy }}</strong>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="box">
+        <form action="/predict" method="post" id="predictionForm">
+            
+            <!-- Basic Information -->
+            <div class="form-section">
+                <div class="section-title"><i class="fas fa-user"></i> Basic Information</div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="AGE">Age (years)</label>
+                            <input name="AGE" id="AGE" type="number" min="18" max="120" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="GENDER">Gender</label>
+                            <select name="GENDER" id="GENDER" class="form-select" required>
+                                <option value="">Select Gender</option>
+                                <option value="1">Male</option>
+                                <option value="0">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="OXYGEN_SATURATION">Oxygen Saturation (%)</label>
+                            <input name="OXYGEN_SATURATION" id="OXYGEN_SATURATION" type="number" step="0.1" min="70" max="100" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lifestyle & Habits -->
+            <div class="form-section">
+                <div class="section-title"><i class="fas fa-smoking"></i> Lifestyle & Habits</div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="SMOKING">Smoking Status</label>
+                            <select name="SMOKING" id="SMOKING" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="ALCOHOL_CONSUMPTION">Alcohol Consumption</label>
+                            <select name="ALCOHOL_CONSUMPTION" id="ALCOHOL_CONSUMPTION" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="EXPOSURE_TO_POLLUTION">Exposure to Pollution</label>
+                            <select name="EXPOSURE_TO_POLLUTION" id="EXPOSURE_TO_POLLUTION" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Respiratory Symptoms -->
+            <div class="form-section">
+                <div class="section-title"><i class="fas fa-wind"></i> Respiratory Symptoms</div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="BREATHING_ISSUE">Breathing Issue</label>
+                            <select name="BREATHING_ISSUE" id="BREATHING_ISSUE" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="CHEST_TIGHTNESS">Chest Tightness</label>
+                            <select name="CHEST_TIGHTNESS" id="CHEST_TIGHTNESS" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="THROAT_DISCOMFORT">Throat Discomfort</label>
+                            <select name="THROAT_DISCOMFORT" id="THROAT_DISCOMFORT" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Physical Conditions -->
+            <div class="form-section">
+                <div class="section-title"><i class="fas fa-heart"></i> Physical Conditions</div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="FINGER_DISCOLORATION">Finger Discoloration</label>
+                            <select name="FINGER_DISCOLORATION" id="FINGER_DISCOLORATION" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="IMMUNE_WEAKNESS">Immune Weakness</label>
+                            <select name="IMMUNE_WEAKNESS" id="IMMUNE_WEAKNESS" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="ENERGY_LEVEL">Energy Level (%)</label>
+                            <input name="ENERGY_LEVEL" id="ENERGY_LEVEL" type="number" step="1" min="0" max="100" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Medical History -->
+            <div class="form-section">
+                <div class="section-title"><i class="fas fa-history"></i> Medical & Family History</div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="LONG_TERM_ILLNESS">Long Term Illness</label>
+                            <select name="LONG_TERM_ILLNESS" id="LONG_TERM_ILLNESS" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="FAMILY_HISTORY">Family History of Cancer</label>
+                            <select name="FAMILY_HISTORY" id="FAMILY_HISTORY" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="SMOKING_FAMILY_HISTORY">Family Smoking History</label>
+                            <select name="SMOKING_FAMILY_HISTORY" id="SMOKING_FAMILY_HISTORY" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mental & Stress -->
+            <div class="form-section">
+                <div class="section-title"><i class="fas fa-brain"></i> Mental Health</div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="MENTAL_STRESS">Mental Stress</label>
+                            <select name="MENTAL_STRESS" id="MENTAL_STRESS" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="STRESS_IMMUNE">Stress-Related Immune Issues</label>
+                            <select name="STRESS_IMMUNE" id="STRESS_IMMUNE" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p>Analyzing your data...</p>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-stethoscope"></i> Predict Risk
+            </button>
+            
+        </form>
+        
+        <!-- Results Section -->
+        {% if prediction_text %}
+        <div class="prediction-result {% if '🔴' in prediction_text %}high-risk{% else %}low-risk{% endif %}">
+            <h3>{{ prediction_text }}</h3>
+            <div class="probability">Risk Probability: {{ probability }}</div>
+            <div class="confidence">Confidence: {{ confidence }}</div>
+            <hr style="opacity: 0.3; margin: 15px 0;">
+            <div class="model-accuracy-display">
+                <i class="fas fa-chart-bar"></i> Model Training Accuracy: <strong>{{ model_accuracy }}</strong>
+            </div>
+            <div class="info-badge">
+                <i class="fas fa-info-circle"></i> This is an DL-based assessment. Please consult a medical professional for accurate diagnosis.
+            </div>
+        </div>
+        {% endif %}
+        
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('predictionForm').addEventListener('submit', function(e) {
+        const spinner = document.getElementById('loadingSpinner');
+        spinner.style.display = 'block';
+    });
+</script>
+
+</body>
+</html>
