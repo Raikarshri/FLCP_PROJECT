@@ -1,0 +1,14 @@
+Flask
+SQLAlchemy
+Werkzeug
+python-dotenv
+pandas
+numpy
+scikit-learn
+tensorflow
+mlflow
+dvc
+qiskit
+qiskit-machine-learning
+qiskit-algorithms
+psycopg2-binary

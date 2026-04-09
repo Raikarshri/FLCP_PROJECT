@@ -11,6 +11,7 @@ from functools import wraps
 from pathlib import Path
 
 from flask import Flask, g, make_response, redirect, render_template, request, url_for
+from dotenv import load_dotenv
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, scoped_session, sessionmaker
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -21,6 +22,8 @@ from FLCP_ML.models import FEATURE_NAMES, predict_structured
 
 BASE_DIR = Path(__file__).resolve().parent
 QML_RESULTS_PATH = BASE_DIR / "FLCP_QML" / "model_results.json"
+
+load_dotenv(BASE_DIR / ".env")
 
 FEATURE_METADATA = {
     "AGE": {"label": "Age", "type": "number", "min": 18, "max": 120, "step": "1"},

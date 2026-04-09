@@ -551,11 +551,13 @@ python -m pip install --upgrade pip
 
 ## 6. Install All Required Packages
 
-Install the project dependencies manually:
+Install the project dependencies from the root `requirements.txt`:
 
 ```powershell
-pip install flask pandas numpy scikit-learn tensorflow mlflow dvc qiskit qiskit-machine-learning qiskit-algorithms
+pip install -r requirements.txt
 ```
+
+This also includes the packages needed for Supabase/PostgreSQL support.
 
 ## 7. Verify the Environment
 
