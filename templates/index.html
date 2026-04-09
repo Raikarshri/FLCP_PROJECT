@@ -3,233 +3,435 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lung Cancer Risk Prediction</title>
+    <title>{{ page_title }}</title>
     <style>
         :root {
-            --page-bg: #eef3f7;
-            --panel-bg: #ffffff;
-            --ink: #17324d;
-            --muted: #5f7387;
-            --line: #bfd0dc;
-            --accent: #1d5f7a;
-            --accent-soft: #dfeef4;
-            --good: #176c52;
-            --shadow: 0 18px 40px rgba(18, 42, 61, 0.08);
+            --bg: #f3efe7;
+            --panel: rgba(255, 255, 255, 0.92);
+            --ink: #213547;
+            --muted: #6a7b87;
+            --line: #d8cfc2;
+            --accent: #bb5a36;
+            --accent-dark: #8f4021;
+            --shadow: 0 20px 40px rgba(33, 53, 71, 0.12);
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
-            font-family: Georgia, "Times New Roman", serif;
-            background:
-                linear-gradient(180deg, rgba(29, 95, 122, 0.08), rgba(29, 95, 122, 0)),
-                var(--page-bg);
             color: var(--ink);
+            font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(187, 90, 54, 0.18), transparent 35%),
+                radial-gradient(circle at top right, rgba(46, 125, 90, 0.16), transparent 28%),
+                linear-gradient(180deg, #f8f4ee 0%, var(--bg) 100%);
         }
 
         .page {
-            max-width: 980px;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 40px 20px 56px;
+            padding: 28px 20px 44px;
         }
 
-        .frame {
-            background: var(--panel-bg);
-            border: 3px solid var(--line);
-            border-radius: 22px;
-            padding: 28px;
+        .shell {
+            background: var(--panel);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 28px;
             box-shadow: var(--shadow);
+            overflow: hidden;
+            backdrop-filter: blur(14px);
         }
 
-        .hero {
-            text-align: center;
-            border: 2px solid var(--accent);
-            border-radius: 14px;
-            padding: 18px 14px;
-            margin-bottom: 26px;
-            background: linear-gradient(180deg, rgba(29, 95, 122, 0.1), rgba(29, 95, 122, 0.03));
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 24px 28px;
+            background: linear-gradient(135deg, rgba(33, 53, 71, 0.96), rgba(45, 65, 84, 0.92));
+            color: #fff;
         }
 
-        .hero h1 {
+        .brand h1 {
             margin: 0;
-            font-size: clamp(1.9rem, 4vw, 2.7rem);
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            letter-spacing: 0.03em;
         }
 
-        .hero p {
-            margin: 10px 0 0;
-            color: var(--muted);
-            font-size: 1rem;
+        .brand p {
+            margin: 8px 0 0;
+            color: rgba(255, 255, 255, 0.78);
         }
 
-        .section {
-            margin-top: 22px;
-            padding: 20px;
-            border: 2px solid var(--line);
-            border-radius: 16px;
-            background: #fcfdff;
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
         }
 
-        .section h2 {
-            margin: 0 0 16px;
-            font-size: 1.35rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--accent);
+        .welcome {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.82);
         }
 
-        .grid {
+        .logout-button {
+            border: none;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            padding: 10px 18px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .content {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: 1.1fr 0.9fr;
+        }
+
+        .left-panel,
+        .right-panel {
+            padding: 28px;
+        }
+
+        .left-panel {
+            border-right: 1px solid var(--line);
+        }
+
+        .section-title {
+            margin: 0 0 16px;
+            font-size: 1.2rem;
+        }
+
+        .intro,
+        .empty-state,
+        .tiny-note,
+        .history-meta {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .message {
+            padding: 14px 16px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+            line-height: 1.5;
+        }
+
+        .message.error {
+            background: #fff1ed;
+            color: #8c3519;
+            border: 1px solid #f3c4b4;
+        }
+
+        .message.success {
+            background: #edf7f0;
+            color: #206346;
+            border: 1px solid #bfdfcb;
+        }
+
+        .form-grid,
+        .result-summary {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 14px;
         }
 
-        .card {
-            border: 2px solid var(--line);
-            border-radius: 14px;
-            padding: 16px;
-            background: var(--panel-bg);
-            text-align: center;
-        }
-
-        .card h3 {
-            margin: 0 0 10px;
-            font-size: 1.05rem;
-        }
-
-        .metric-label {
-            color: var(--muted);
-            font-size: 0.92rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
-        .metric-value {
-            margin-top: 8px;
-            font-size: 1.9rem;
-            font-weight: bold;
-            color: var(--good);
-        }
-
-        .single-metric {
-            border: 2px solid var(--line);
-            border-radius: 14px;
-            padding: 18px;
-            background: var(--accent-soft);
-        }
-
-        .single-metric .metric-value {
-            font-size: 2.1rem;
-        }
-
-        .note {
-            margin-top: 12px;
-            color: var(--muted);
-            line-height: 1.6;
-        }
-
-        .best-line {
-            margin-top: 16px;
-            padding: 12px 14px;
-            border-radius: 12px;
-            background: rgba(23, 108, 82, 0.08);
-            color: var(--good);
-            font-weight: bold;
-        }
-
-        .footer-note {
-            margin-top: 18px;
-            padding: 14px 16px;
-            border-radius: 12px;
-            background: #f4f8fb;
+        .result-card,
+        .history-card,
+        .form-card {
             border: 1px solid var(--line);
-            color: var(--muted);
-            line-height: 1.6;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.78);
+            padding: 20px;
         }
 
-        @media (max-width: 720px) {
-            .grid {
+        .result-pill span {
+            display: block;
+            font-size: 0.84rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .result-pill strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 1.55rem;
+            color: var(--accent-dark);
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field label {
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 1rem;
+            background: #fff;
+            color: var(--ink);
+        }
+
+        .submit-button {
+            margin-top: 18px;
+            width: 100%;
+            border: none;
+            border-radius: 16px;
+            padding: 14px 18px;
+            font-size: 1rem;
+            font-weight: 800;
+            color: #fff;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            cursor: pointer;
+        }
+
+        .result-summary {
+            margin-bottom: 18px;
+        }
+
+        .result-pill {
+            border-radius: 18px;
+            padding: 18px;
+            background: linear-gradient(135deg, rgba(187, 90, 54, 0.14), rgba(46, 125, 90, 0.12));
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid #eadfd3;
+            border-radius: 18px;
+            background: #fffdfa;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 620px;
+        }
+
+        th {
+            text-align: left;
+            padding: 14px 16px;
+            background: #f6efe8;
+            border-bottom: 1px solid #eadfd3;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        td {
+            text-align: left;
+            padding: 15px 16px;
+            border-bottom: 1px solid #eadfd3;
+            vertical-align: top;
+            line-height: 1.5;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fcf8f4;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        td strong {
+            color: var(--accent-dark);
+        }
+
+        .col-model {
+            width: 24%;
+        }
+
+        .col-output {
+            width: 20%;
+        }
+
+        .col-accuracy {
+            width: 15%;
+        }
+
+        .col-notes {
+            width: 41%;
+        }
+
+        .history-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .history-item {
+            padding: 16px;
+            border-radius: 18px;
+            background: #fcfaf7;
+            border: 1px solid #eadfd3;
+        }
+
+        .history-item strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        @media (max-width: 980px) {
+            .content {
                 grid-template-columns: 1fr;
             }
 
-            .frame {
-                padding: 18px;
+            .left-panel {
+                border-right: none;
+                border-bottom: 1px solid var(--line);
+            }
+        }
+
+        @media (max-width: 720px) {
+            .form-grid,
+            .result-summary {
+                grid-template-columns: 1fr;
             }
 
-            .section {
-                padding: 16px;
+            .topbar {
+                align-items: flex-start;
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
     <div class="page">
-        <div class="frame">
-            <div class="hero">
-                <h1>Lung Cancer Risk Prediction</h1>
-                <p>Lecturer presentation dashboard for ML, DNN, QML, and conclusion summary.</p>
+        <div class="shell">
+            <div class="topbar">
+                <div class="brand">
+                    <h1>Lung Cancer Prediction Dashboard</h1>
+                    <p>Authenticated patient-style risk screening with side-by-side model comparison.</p>
+                </div>
+                <div class="top-actions">
+                    <div class="welcome">Signed in as {{ current_user.name }} ({{ current_user.email }})</div>
+                    <form method="post" action="{{ url_for('logout') }}">
+                        <button class="logout-button" type="submit">Logout</button>
+                    </form>
+                </div>
             </div>
 
-            <section class="section">
-                <h2>ML</h2>
-                {% if ml_section.available %}
-                <div class="grid">
-                    {% for card in ml_section.cards %}
-                    <div class="card">
-                        <h3>{{ card.title }}</h3>
-                        <div class="metric-label">Accuracy</div>
-                        <div class="metric-value">{{ "%.2f"|format(card.accuracy) }}%</div>
+            <div class="content">
+                <div class="left-panel">
+                    <h2 class="section-title">Enter Patient Inputs</h2>
+                    <p class="intro">Fill in the form once to compare live classical predictions, deep learning risk scoring, and saved QML benchmark accuracy in one place.</p>
+
+                    {% if error_message %}
+                    <div class="message error">{{ error_message }}</div>
+                    {% endif %}
+
+                    {% if success_message %}
+                    <div class="message success">{{ success_message }}</div>
+                    {% endif %}
+
+                    <div class="form-card">
+                        <form method="post" action="{{ url_for('predict') }}">
+                            <div class="form-grid">
+                                {% for field in fields %}
+                                <div class="field">
+                                    <label for="{{ field.name }}">{{ field.label }}</label>
+                                    {% if field.type == 'number' %}
+                                    <input id="{{ field.name }}" name="{{ field.name }}" type="number" step="{{ field.step }}" {% if field.min is not none %}min="{{ field.min }}"{% endif %} {% if field.max is not none %}max="{{ field.max }}"{% endif %} required>
+                                    {% else %}
+                                    <select id="{{ field.name }}" name="{{ field.name }}" required>
+                                        <option value="">Select</option>
+                                        {% for value, label in field.options %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button class="submit-button" type="submit">Predict And Compare Models</button>
+                        </form>
+                        <div class="tiny-note">
+                            {% if has_tensorflow %}
+                            DNN prediction will be included when the trained TensorFlow model artifacts are available.
+                            {% else %}
+                            TensorFlow is not installed in this environment, so the DNN row will remain unavailable until it is added.
+                            {% endif %}
+                        </div>
                     </div>
-                    {% endfor %}
                 </div>
-                <div class="best-line">
-                    Best ML model: {{ ml_section.best_model }} at {{ "%.2f"|format(ml_section.best_accuracy) }}%
-                </div>
-                {% else %}
-                <p class="note">{{ ml_section.message }}</p>
-                {% endif %}
-            </section>
 
-            <section class="section">
-                <h2>DNN</h2>
-                {% if dl_section.available %}
-                <div class="single-metric">
-                    <div class="metric-label">Accuracy</div>
-                    <div class="metric-value">{{ "%.2f"|format(dl_section.accuracy) }}%</div>
-                </div>
-                {% else %}
-                <p class="note">{{ dl_section.message }}</p>
-                {% endif %}
-            </section>
+                <div class="right-panel">
+                    <div class="result-card">
+                        <h2 class="section-title">Latest Prediction Result</h2>
+                        {% if result_bundle %}
+                        <div class="result-summary">
+                            <div class="result-pill">
+                                <span>Final Classical Recommendation</span>
+                                <strong>{{ result_bundle.final_prediction }}</strong>
+                            </div>
+                            <div class="result-pill">
+                                <span>DNN Risk Probability</span>
+                                <strong>{{ result_bundle.dnn_probability }}</strong>
+                            </div>
+                        </div>
 
-            <section class="section">
-                <h2>QML</h2>
-                {% if qml_section.available %}
-                <div class="single-metric">
-                    <div class="metric-label">Quantum Accuracy</div>
-                    <div class="metric-value">{{ "%.2f"|format(qml_section.accuracy) }}%</div>
-                </div>
-                {% if qml_section.classical_accuracy is not none %}
-                <p class="note">Classical baseline used in the QML workflow: {{ "%.2f"|format(qml_section.classical_accuracy) }}%</p>
-                {% endif %}
-                {% else %}
-                <p class="note">{{ qml_section.message }}</p>
-                {% endif %}
-            </section>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="col-model">Model</th>
+                                        <th class="col-output">Prediction / Output</th>
+                                        <th class="col-accuracy">Accuracy</th>
+                                        <th class="col-notes">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in result_bundle.rows %}
+                                    <tr>
+                                        <td><strong>{{ row.model }}</strong></td>
+                                        <td>{{ row.output }}</td>
+                                        <td>{{ row.accuracy }}</td>
+                                        <td>{{ row.notes }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tiny-note">DNN confidence: {{ result_bundle.dnn_confidence }}</div>
+                        {% else %}
+                        <p class="empty-state">No prediction has been run in this session yet. Submit the form to generate the full comparison table and save it to your history.</p>
+                        {% endif %}
+                    </div>
 
-            <section class="section">
-                <h2>Conclusion</h2>
-                <div class="footer-note">
-                    {{ conclusion }}
+                    <div class="history-card" style="margin-top: 18px;">
+                        <h2 class="section-title">Recent Prediction History</h2>
+                        {% if history %}
+                        <div class="history-list">
+                            {% for item in history %}
+                            <div class="history-item">
+                                <strong>{{ item.final_prediction }}</strong>
+                                <div class="history-meta">Saved: {{ item.created_at }}</div>
+                                <div class="history-meta">Random Forest: {{ item.random_forest }}</div>
+                                <div class="history-meta">DNN Probability: {{ item.dnn_probability }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="empty-state">Your saved predictions will appear here after the first successful form submission.</p>
+                        {% endif %}
+                    </div>
                 </div>
-            </section>
-
-            <div class="footer-note">
-                DVC generates the comparison result files through the pipeline, MLflow stores the detailed experiment history, and this webpage is the academic summary layer for the final demo.
             </div>
         </div>
     </div>

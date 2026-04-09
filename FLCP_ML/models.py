@@ -78,16 +78,43 @@ MODEL_STATE = train_models()
 FEATURE_NAMES = MODEL_STATE["feature_names"]
 
 
-def predict_all(input_data):
+def predict_structured(input_data):
     if len(input_data) != len(FEATURE_NAMES):
         raise ValueError(f"Expected {len(FEATURE_NAMES)} inputs, received {len(input_data)}.")
 
     input_data_scaled = MODEL_STATE["scaler"].transform([input_data])
 
-    k = MODEL_STATE["knn"].predict(input_data_scaled)[0]
-    d = MODEL_STATE["dt"].predict(input_data_scaled)[0]
-    r = MODEL_STATE["rf"].predict(input_data_scaled)[0]
-    final = round((k + d + r) / 3)
+    predictions = {
+        "knn": int(MODEL_STATE["knn"].predict(input_data_scaled)[0]),
+        "decision_tree": int(MODEL_STATE["dt"].predict(input_data_scaled)[0]),
+        "random_forest": int(MODEL_STATE["rf"].predict(input_data_scaled)[0]),
+    }
+    final_prediction = round(
+        (predictions["knn"] + predictions["decision_tree"] + predictions["random_forest"]) / 3
+    )
 
     metrics = MODEL_STATE["metrics"]
-    return k, d, r, final, metrics["knn_acc"], metrics["dt_acc"], metrics["rf_acc"]
+    return {
+        "predictions": predictions,
+        "final_prediction": int(final_prediction),
+        "metrics": {
+            "knn": metrics["knn_acc"],
+            "decision_tree": metrics["dt_acc"],
+            "random_forest": metrics["rf_acc"],
+        },
+    }
+
+
+def predict_all(input_data):
+    result = predict_structured(input_data)
+    predictions = result["predictions"]
+    metrics = result["metrics"]
+    return (
+        predictions["knn"],
+        predictions["decision_tree"],
+        predictions["random_forest"],
+        result["final_prediction"],
+        metrics["knn"],
+        metrics["decision_tree"],
+        metrics["random_forest"],
+    )

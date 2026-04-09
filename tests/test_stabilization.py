@@ -1,57 +1,120 @@
 import importlib.util
+import os
 import tempfile
 import unittest
-from unittest import mock
 from pathlib import Path
 
 
-class DashboardAppTests(unittest.TestCase):
+class AuthenticatedAppTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        import app as dashboard_app
+        import app as dashboard_module
 
-        cls.dashboard_app = dashboard_app
-        dashboard_app.app.testing = True
-        cls.client = dashboard_app.app.test_client()
+        cls.dashboard_module = dashboard_module
 
-    def test_dashboard_renders_with_missing_files(self):
-        with mock.patch.object(self.dashboard_app, "ML_RESULTS_PATH", Path("missing_ml.json")), \
-             mock.patch.object(self.dashboard_app, "DL_RESULTS_PATH", Path("missing_dl.json")), \
-             mock.patch.object(self.dashboard_app, "QML_RESULTS_PATH", Path("missing_qml.json")):
-            response = self.client.get("/")
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        database_path = Path(self.tempdir.name) / "test_app.db"
+        self.app = self.dashboard_module.create_app(
+            {
+                "TESTING": True,
+                "SECRET_KEY": "test-secret",
+                "JWT_SECRET": "jwt-secret",
+                "DATABASE_URL": f"sqlite:///{database_path}",
+                "COOKIE_SECURE": False,
+            }
+        )
+        self.dashboard_module.reset_database()
+        self.client = self.app.test_client()
 
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Lung Cancer Risk Prediction", response.data)
-        self.assertIn(b"No comparison metrics are available yet", response.data)
+    def tearDown(self):
+        self.dashboard_module.close_database()
+        self.tempdir.cleanup()
 
-    def test_dashboard_renders_all_sections_from_results(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmp_path = Path(tmpdir)
-            ml_path = tmp_path / "ml_results.json"
-            dl_path = tmp_path / "dl_results.json"
-            qml_path = tmp_path / "model_results.json"
+    def signup(self, email="demo@example.com", password="pass123", name="Demo User"):
+        return self.client.post(
+            "/signup",
+            data={"name": name, "email": email, "password": password},
+            follow_redirects=False,
+        )
 
-            ml_path.write_text(
-                (
-                    '{"knn_accuracy": 0.81, "decision_tree_accuracy": 0.77, '
-                    '"random_forest_accuracy": 0.88, "best_model": "Random Forest", '
-                    '"best_accuracy": 0.88}'
-                ),
-                encoding="utf-8",
-            )
-            dl_path.write_text('{"accuracy": 0.91}', encoding="utf-8")
-            qml_path.write_text(
-                (
-                    '{"classical_accuracy": 0.85, "quantum_accuracy": 0.72, '
-                    '"num_features": 4, "test_size": 50, "total_samples": 250}'
-                ),
-                encoding="utf-8",
-            )
+    def login(self, email="demo@example.com", password="pass123"):
+        return self.client.post(
+            "/login",
+            data={"email": email, "password": password},
+            follow_redirects=False,
+        )
 
-            with mock.patch.object(self.dashboard_app, "ML_RESULTS_PATH", ml_path), \
-                 mock.patch.object(self.dashboard_app, "DL_RESULTS_PATH", dl_path), \
-                 mock.patch.object(self.dashboard_app, "QML_RESULTS_PATH", qml_path):
-                response = self.client.get("/")
+    def prediction_payload(self):
+        return {
+            "AGE": "55",
+            "GENDER": "1",
+            "SMOKING": "1",
+            "FINGER_DISCOLORATION": "0",
+            "MENTAL_STRESS": "1",
+            "EXPOSURE_TO_POLLUTION": "1",
+            "LONG_TERM_ILLNESS": "0",
+            "ENERGY_LEVEL": "63.5",
+            "IMMUNE_WEAKNESS": "0",
+            "BREATHING_ISSUE": "1",
+            "ALCOHOL_CONSUMPTION": "0",
+            "THROAT_DISCOMFORT": "1",
+            "OXYGEN_SATURATION": "95.4",
+            "CHEST_TIGHTNESS": "0",
+            "FAMILY_HISTORY": "1",
+            "SMOKING_FAMILY_HISTORY": "0",
+            "STRESS_IMMUNE": "1",
+        }
+
+    def test_signup_creates_user_and_redirects_to_dashboard(self):
+        response = self.signup()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/dashboard")
+        self.assertIn("flcp_auth=", response.headers.get("Set-Cookie", ""))
+
+        with self.app.app_context():
+            db_session = self.dashboard_module.get_db()
+            self.assertEqual(db_session.query(self.dashboard_module.User).count(), 1)
+            self.assertEqual(db_session.query(self.dashboard_module.AuthToken).count(), 1)
+
+    def test_duplicate_email_is_rejected(self):
+        self.signup()
+        self.client = self.app.test_client()
+        response = self.signup()
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b"already exists", response.data)
+
+    def test_login_sets_jwt_cookie(self):
+        self.signup()
+        self.client = self.app.test_client()
+
+        response = self.login()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/dashboard")
+        self.assertIn("flcp_auth=", response.headers.get("Set-Cookie", ""))
+
+    def test_invalid_login_shows_error(self):
+        self.signup()
+        self.client = self.app.test_client()
+
+        response = self.login(password="wrong-password")
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn(b"Invalid email or password", response.data)
+
+    def test_dashboard_redirects_when_not_authenticated(self):
+        response = self.client.get("/dashboard", follow_redirects=False)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/login")
+
+    def test_prediction_persists_and_shows_all_model_rows(self):
+        self.signup()
+
+        response = self.client.post("/predict", data=self.prediction_payload(), follow_redirects=True)
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"KNN", response.data)
@@ -59,8 +122,85 @@ class DashboardAppTests(unittest.TestCase):
         self.assertIn(b"Random Forest", response.data)
         self.assertIn(b"DNN", response.data)
         self.assertIn(b"QML", response.data)
-        self.assertIn(b"91.00%", response.data)
-        self.assertIn(b"Conclusion", response.data)
+        self.assertIn(b"Prediction completed and saved", response.data)
+
+        with self.app.app_context():
+            db_session = self.dashboard_module.get_db()
+            prediction = db_session.query(self.dashboard_module.Prediction).one()
+            self.assertEqual(prediction.user_id, 1)
+
+    def test_prediction_validation_rejects_missing_values(self):
+        self.signup()
+        payload = self.prediction_payload()
+        payload.pop("AGE")
+
+        response = self.client.post("/predict", data=payload)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b"Age is required", response.data)
+
+    def test_logout_revokes_token_and_redirects(self):
+        self.signup()
+        response = self.client.post("/logout", follow_redirects=False)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/login")
+
+        with self.app.app_context():
+            db_session = self.dashboard_module.get_db()
+            token = db_session.query(self.dashboard_module.AuthToken).one()
+            self.assertTrue(token.is_revoked)
+
+    def test_dashboard_no_longer_contains_lecturer_text(self):
+        self.signup()
+        response = self.client.get("/dashboard")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(b"Lecturer", response.data)
+
+    def test_history_only_shows_current_users_records(self):
+        self.signup(email="user1@example.com")
+        self.client.post("/predict", data=self.prediction_payload(), follow_redirects=True)
+
+        second_client = self.app.test_client()
+        second_client.post(
+            "/signup",
+            data={"name": "User Two", "email": "user2@example.com", "password": "pass456"},
+            follow_redirects=True,
+        )
+        response = second_client.get("/dashboard")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"saved predictions will appear here", response.data)
+
+    def test_supabase_database_url_takes_precedence_when_provided(self):
+        default_database = "sqlite:///fallback.db"
+        previous_supabase = os.environ.get("SUPABASE_DB_URL")
+        previous_database = os.environ.get("DATABASE_URL")
+        try:
+            os.environ["SUPABASE_DB_URL"] = "postgres://supabase.example/project"
+            os.environ["DATABASE_URL"] = "sqlite:///ignored.db"
+            resolved = self.dashboard_module.resolve_database_url(default_database)
+        finally:
+            if previous_supabase is None:
+                os.environ.pop("SUPABASE_DB_URL", None)
+            else:
+                os.environ["SUPABASE_DB_URL"] = previous_supabase
+            if previous_database is None:
+                os.environ.pop("DATABASE_URL", None)
+            else:
+                os.environ["DATABASE_URL"] = previous_database
+
+        self.assertEqual(resolved, "postgresql://supabase.example/project")
+
+    def test_postgres_engine_options_include_sslmode(self):
+        options = self.dashboard_module.build_engine_options(
+            "postgresql://db.example/flcp",
+            {"DATABASE_SSLMODE": "require"},
+        )
+
+        self.assertEqual(options["connect_args"]["sslmode"], "require")
+        self.assertTrue(options["pool_pre_ping"])
 
 
 class MLAppTests(unittest.TestCase):
@@ -157,7 +297,10 @@ class QMLReportTests(unittest.TestCase):
             generate_html_report(results_path=results_path, report_path=report_path)
 
             self.assertTrue(report_path.exists())
-            self.assertIn("Classical SVM vs Quantum Machine Learning Comparison", report_path.read_text(encoding="utf-8"))
+            self.assertIn(
+                "Classical SVM vs Quantum Machine Learning Comparison",
+                report_path.read_text(encoding="utf-8"),
+            )
 
 
 if __name__ == "__main__":

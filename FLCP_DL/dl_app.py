@@ -1,10 +1,10 @@
 from pathlib import Path
+import importlib.util
 import warnings
 
 import numpy as np
 import pickle
 from flask import Flask, render_template, request
-from tensorflow.keras.models import load_model
 
 warnings.filterwarnings("ignore")
 
@@ -31,6 +31,11 @@ def resolve_artifact_path(filename):
 
 
 def load_artifacts():
+    if importlib.util.find_spec("tensorflow") is None:
+        raise RuntimeError("TensorFlow is not installed. DNN predictions are unavailable.")
+
+    from tensorflow.keras.models import load_model
+
     model_path = resolve_artifact_path("dl_model.h5")
     scaler_path = resolve_artifact_path("scaler.pkl")
     accuracy_path = resolve_artifact_path("model_accuracy.pkl")
@@ -44,18 +49,65 @@ def load_artifacts():
     return model, scaler, model_info.get("accuracy", 0) * 100
 
 
-try:
-    model, scaler, model_accuracy = load_artifacts()
-    startup_error = None
-    print("Model and scaler loaded successfully")
-    print(f"Model Test Accuracy: {model_accuracy:.2f}%")
-except (FileNotFoundError, OSError, ValueError) as exc:
-    model = None
-    scaler = None
-    model_accuracy = 0
-    startup_error = str(exc)
+def get_runtime_state():
+    try:
+        model, scaler, model_accuracy = load_artifacts()
+        return {
+            "model": model,
+            "scaler": scaler,
+            "model_accuracy": model_accuracy,
+            "startup_error": None,
+        }
+    except (FileNotFoundError, OSError, RuntimeError, ValueError) as exc:
+        return {
+            "model": None,
+            "scaler": None,
+            "model_accuracy": 0,
+            "startup_error": str(exc),
+        }
+
+
+def predict_from_values(values):
+    runtime = get_runtime_state()
+    if runtime["model"] is None or runtime["scaler"] is None:
+        return {
+            "available": False,
+            "prediction": None,
+            "label": "Unavailable",
+            "probability": None,
+            "confidence": None,
+            "accuracy": runtime["model_accuracy"],
+            "note": runtime["startup_error"] or "Model artifacts are not available.",
+        }
+
+    data = np.array([values], dtype=float)
+    data_scaled = runtime["scaler"].transform(data)
+    prediction_prob = float(runtime["model"].predict(data_scaled, verbose=0)[0][0])
+    is_high_risk = prediction_prob > 0.5
+
+    return {
+        "available": True,
+        "prediction": int(is_high_risk),
+        "label": "High Risk" if is_high_risk else "Low Risk",
+        "probability": prediction_prob * 100,
+        "confidence": max(prediction_prob, 1 - prediction_prob) * 100,
+        "accuracy": runtime["model_accuracy"],
+        "note": "Probability-based DNN risk assessment",
+    }
+
+
+runtime_state = get_runtime_state()
+model = runtime_state["model"]
+scaler = runtime_state["scaler"]
+model_accuracy = runtime_state["model_accuracy"]
+startup_error = runtime_state["startup_error"]
+
+if startup_error:
     print(f"ERROR: {startup_error}")
     print("Please run FLCP_DL/dl_model.py first to train the model.")
+else:
+    print("Model and scaler loaded successfully")
+    print(f"Model Test Accuracy: {model_accuracy:.2f}%")
 
 
 features = [
@@ -106,21 +158,14 @@ def predict():
             if value is None or value == "":
                 raise ValueError(f"Please select a value for {feature}.")
             values.append(float(value))
-
-        data = np.array([values])
-        data_scaled = scaler.transform(data)
-        prediction_prob = float(model.predict(data_scaled, verbose=0)[0][0])
-
-        prob_percentage = prediction_prob * 100
-        risk_level = "High Risk" if prediction_prob > 0.5 else "Low Risk"
-        risk_emoji = "High" if prediction_prob > 0.5 else "Low"
+        result = predict_from_values(values)
 
         return render_template(
             "index.html",
             features=features,
-            prediction_text=f"{risk_emoji} - {risk_level}",
-            probability=f"{prob_percentage:.1f}%",
-            confidence=f"{(max(prediction_prob, 1 - prediction_prob) * 100):.1f}%",
+            prediction_text=result["label"],
+            probability=f"{result['probability']:.1f}%",
+            confidence=f"{result['confidence']:.1f}%",
             model_accuracy=f"{model_accuracy:.2f}%",
         )
     except ValueError as exc:
