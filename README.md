@@ -2,13 +2,20 @@
 
 ## Overview
 
-FLCP Project is a lung cancer prediction and model comparison system built around a shared structured healthcare dataset. The project studies the same prediction problem through three separate approaches:
+FLCP Project is a lung cancer prediction and model comparison system built around a shared structured healthcare dataset. The current root application is a unified Flask app with:
+
+- user signup and login
+- JWT-based authenticated sessions stored in HTTP-only cookies
+- database-backed users, token records, and prediction history
+- a single dashboard where one submitted form compares multiple model outputs
+
+The project studies the same prediction problem through three separate approaches:
 
 - Classical Machine Learning
 - Deep Learning
 - Quantum Machine Learning
 
-The central idea is to use patient-style clinical and lifestyle attributes such as age, smoking status, oxygen saturation, breathing issues, family history, and related health indicators to predict the likelihood of lung cancer. The repository is organized as a multi-module academic/research-style project rather than a single production application.
+The central idea is to use patient-style clinical and lifestyle attributes such as age, smoking status, oxygen saturation, breathing issues, family history, and related health indicators to predict the likelihood of lung cancer. The repository still contains separate ML, DL, and QML training modules, but the main user-facing experience is now the authenticated root app in `app.py`.
 
 ## Project Purpose
 
@@ -61,8 +68,12 @@ FLCP_PROJECT/
 |-- dvc.lock
 |-- mlflow.db
 |-- app.py
+|-- .env
+|-- .env.supabase.example
 |-- templates/
-|   `-- index.html
+|   |-- index.html
+|   |-- login.html
+|   `-- signup.html
 |-- dl_model.h5
 |-- scaler.pkl
 |-- model_accuracy.pkl
@@ -78,6 +89,8 @@ FLCP_PROJECT/
 ### Backend and Web Framework
 
 - Flask
+- SQLAlchemy
+- Werkzeug security
 
 ### Data Processing
 
@@ -118,6 +131,12 @@ FLCP_PROJECT/
 - CSS
 - Bootstrap
 - Font Awesome
+
+### Authentication and Database
+
+- JWT-style signed auth token stored in HTTP-only cookies
+- PostgreSQL or SQLite through SQLAlchemy
+- Supabase PostgreSQL supported through `SUPABASE_DB_URL`
 
 ## Dataset
 
@@ -351,6 +370,43 @@ This module compares a classical Support Vector Machine against a quantum Variat
 - `qml_model.py` performs training and stores result metrics.
 - `generate_report.py` reads those result metrics and builds the report page.
 - `test_model.py` provides a lightweight testing path for report generation.
+
+## 4. Root Application: Unified Authenticated Dashboard
+
+### Purpose
+
+The root Flask app in [`app.py`](D:/sri/FLCP_PROJECT/app.py) is now the main user-facing application. It combines authentication, prediction comparison, and per-user history tracking in a single dashboard.
+
+### Main Features
+
+- signup and login pages
+- JWT-backed authenticated browser sessions stored in HTTP-only cookies
+- protected dashboard route
+- one form for all 17 patient inputs
+- comparison table for:
+  - KNN
+  - Decision Tree
+  - Random Forest
+  - DNN
+  - QML comparison metrics
+- saved prediction history for each signed-in user
+
+### Database Tables
+
+- `users`
+- `auth_tokens`
+- `predictions`
+
+### Database Support
+
+- SQLite works by default for local development
+- PostgreSQL is supported through `DATABASE_URL`
+- Supabase PostgreSQL is supported through `SUPABASE_DB_URL`
+
+### Important Notes
+
+- the DNN row requires TensorFlow and the saved DL artifacts to be available
+- the QML row currently shows comparison metrics only; it is not a live per-form prediction route
 
 ## End-to-End Workflow
 
@@ -623,14 +679,21 @@ If you want a quick test version instead of full QML training:
 python FLCP_QML\test_model.py
 ```
 
-## 12. Run the Main Lecturer Demo Page
+## 12. Run the Main Web App
 
-The main academic comparison dashboard is the root Flask app.
+The root Flask app is now the authenticated dashboard application.
+
+Before starting, activate the environment and install the required database driver if you want PostgreSQL or Supabase:
+
+```powershell
+cd D:\sri\FLCP_PROJECT
+.venv\Scripts\Activate.ps1
+pip install psycopg2-binary
+```
 
 Run:
 
 ```powershell
-cd D:\sri\FLCP_PROJECT
 python app.py
 ```
 
@@ -640,12 +703,22 @@ Open in browser:
 http://127.0.0.1:5000
 ```
 
+The main flow is:
+
+1. open the login or signup page
+2. create an account or sign in
+3. enter the 17 patient input fields
+4. submit the form
+5. review the model comparison table and saved history
+
 This page shows:
 
-- ML comparison cards for KNN, Decision Tree, and Random Forest
-- DNN accuracy
-- QML accuracy
-- final conclusion
+- signup and login flow
+- authenticated dashboard
+- live ML predictions
+- DNN prediction when TensorFlow and artifacts are available
+- QML comparison row from saved metrics
+- per-user prediction history
 
 ## 13. Run the Deep Learning Web App
 
@@ -704,7 +777,40 @@ In MLflow, you should expect experiments like:
 - `DL Experiment`
 - `QML Experiment`
 
-## 16. Recommended End-to-End Run Order
+## 16. Database Configuration
+
+The root app supports these database modes:
+
+- local SQLite by default
+- PostgreSQL through `DATABASE_URL`
+- Supabase PostgreSQL through `SUPABASE_DB_URL`
+
+### Local SQLite
+
+If no PostgreSQL environment variable is provided, the app uses a local SQLite database file:
+
+- `flcp_app.db`
+
+### Supabase PostgreSQL
+
+If you want Supabase, use the direct PostgreSQL connection string and set:
+
+```env
+SUPABASE_DB_URL=postgresql://postgres:YOUR_URL_ENCODED_PASSWORD@db.your-project.supabase.co:5432/postgres
+DATABASE_SSLMODE=require
+JWT_SECRET_KEY=your-random-secret
+FLASK_SECRET_KEY=your-random-secret
+COOKIE_SECURE=false
+JWT_EXP_HOURS=12
+```
+
+Notes:
+
+- if your password contains special characters such as `@`, URL-encode it
+- after the app connects successfully, SQLAlchemy creates the `users`, `auth_tokens`, and `predictions` tables automatically
+- in Supabase, you can verify them in `Table Editor -> public`
+
+## 17. Recommended End-to-End Run Order
 
 If you want to run the complete project in the correct order, use:
 
@@ -727,10 +833,10 @@ python -m mlflow ui --port 5002
 
 Then open:
 
-- `http://127.0.0.1:5000` for the main lecturer dashboard
+- `http://127.0.0.1:5000` for the main authenticated dashboard
 - `http://127.0.0.1:5002` for MLflow experiment tracking
 
-## 17. How to Test That Everything Is Working
+## 18. How to Test That Everything Is Working
 
 ### Check the result files
 
@@ -764,12 +870,12 @@ python app.py
 
 Then confirm the page shows:
 
-- ML section
-- DNN section
-- QML section
-- Conclusion section
+- signup or login page first
+- dashboard after authentication
+- prediction comparison table after form submission
+- recent prediction history for the signed-in user
 
-## 18. Common Issues
+## 19. Common Issues
 
 ### `ModuleNotFoundError: No module named 'tensorflow'`
 
@@ -783,6 +889,28 @@ Fix:
 - activate the correct virtual environment
 - use Python `3.12` or `3.13`
 - run `pip install tensorflow`
+
+### `ModuleNotFoundError: No module named 'psycopg2'`
+
+Cause:
+
+- PostgreSQL is configured but the database driver is not installed
+
+Fix:
+
+- activate the correct virtual environment
+- run `pip install psycopg2-binary`
+
+### Supabase connection fails because the password contains special characters
+
+Cause:
+
+- special characters such as `@` were pasted directly into the connection string
+
+Fix:
+
+- URL-encode the password before putting it in `SUPABASE_DB_URL`
+- for example, `@` becomes `%40`
 
 ### `DL` or `QML` results do not appear in MLflow
 
@@ -817,7 +945,7 @@ Fix:
 - wait for the run to complete
 - or use `python FLCP_QML\test_model.py` for a fast demo result
 
-## 19. Final Presentation Workflow
+## 20. Final Presentation Workflow
 
 For presentation or viva/demo, use this simple flow:
 
@@ -828,7 +956,7 @@ For presentation or viva/demo, use this simple flow:
 5. Start `python -m mlflow ui --port 5002`
 6. Open dashboard on port `5000`
 7. Open MLflow on port `5002`
-8. Show comparison results and conclusion
+8. Sign in and show comparison results and prediction history
 
 ## Project Architecture in Detail
 
